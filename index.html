@@ -858,46 +858,74 @@ document.getElementById('btn-confirm-deposit').addEventListener('click', functio
 });
 
 // --- WITHDRAW SYSTEM ---
-document.getElementById('btn-confirm-withdraw').addEventListener('click', async function() {
+const BTC_PRICE = 80000; // Harga 1 BTC dalam USD
+// ----------------------
 
-    const amount = parseFloat(document.getElementById('withdraw-amount').value);
+document.getElementById('btn-confirm-withdraw').addEventListener('click', function() {
+    const amountUSD = parseFloat(document.getElementById('withdraw-amount').value);
     const address = document.getElementById('withdraw-address').value;
-
-    if (!amount || amount <= 0) {
-        alert("Invalid amount");
+    
+    // Validasi (pake saldo USD)
+    if(isNaN(amountUSD) || amountUSD <= 0) {
+        alert("❌ Please enter a valid amount!");
         return;
     }
 
-    if (!address) {
-        alert("Address required");
+    if(address.trim() === "") {
+        alert("❌ Please enter destination address!");
         return;
     }
 
-    try {
-        const res = await fetch("withdraw.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: `amount=${amount}&address=${address}`
-        });
+    if(amountUSD > saldo) {
+        alert("❌ Insufficient balance!");
+        return;
+    }
 
-        const text = await res.text();
-        console.log("RAW RESPONSE:", text);
+    // --- KONVERSI USD KE BTC ---
+    const amountBTC = amountUSD / BTC_PRICE; 
+    // Contoh: $10.00 / 80000 = 0.00012500 BTC
 
-        const data = JSON.parse(text);
+    // --- KIRIM KE PHP ---
+    const btn = this;
+    const originalText = btn.innerText;
+    
+    btn.innerText = "Processing...";
+    btn.disabled = true;
 
-        if (data.status === "success") {
-            alert("Withdraw success!");
+    // Kirim amountBTC ke PHP, BUKAN amountUSD
+    fetch('process_withdraw.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'amount=' + encodeURIComponent(amountBTC) + '&address=' + encodeURIComponent(address)
+    })
+    .then(response => response.json())
+    .then(res => {
+        btn.innerText = originalText;
+        btn.disabled = false;
+
+        if(res.status == 200 || res.status == "success") {
+            // Kurangi saldo dalam USD
+            saldo -= amountUSD;
+            document.getElementById('saldo-user').innerText = formatUSD(saldo);
+            
+            alert(`✅ Withdraw Success!\n$${amountUSD} (${amountBTC} BTC) sent to:\n${address}`);
+
+            // Reset Form
+            document.getElementById('withdraw-amount').value = "";
+            document.getElementById('withdraw-address').value = "";
         } else {
-            alert("Failed: " + (data.message || "unknown error"));
+            alert("❌ Error: " + (res.message || res.error));
         }
-
-    } catch (err) {
-        alert("Request error");
-        console.log(err);
-    }
+    })
+    .catch(error => {
+        btn.innerText = originalText;
+        btn.disabled = false;
+        alert("❌ Server error!");
+    });
 });
+
 
 // --- START UP ---
 window.onload = () => {
