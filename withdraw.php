@@ -2,36 +2,38 @@
 
 header('Content-Type: application/json');
 
-$api_key = "API_KEY_KAMU";
+// Isi dengan API Key kamu dari FaucetPay
+$api_key = "b1690476756ef87da6c73b1c2331eccb760111963b30388ecceee22a9c611c12";
 
+// Ambil data dari AJAX
 $amount  = floatval($_POST['amount']);
-$address = $_POST['address'];
+$address = trim($_POST['address']);
 
-// minimum check
-if ($amount < 0.00000010) {
+if(empty($address)){
     echo json_encode([
         "status" => "error",
-        "message" => "Minimum 0.00000010 BTC"
+        "message" => "Address cannot be empty"
     ]);
     exit;
 }
 
+// API FaucetPay
 $url = "https://faucetpay.io/api/v1/send";
 
 $data = [
-    "api_key" => $api_key,
-    "to" => $address,
-    "amount" => $amount,
+    "api_key"  => $api_key,
+    "to"       => $address,
+    "amount"   => $amount,
     "currency" => "BTC"
 ];
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data); // Wajib pakai http_build_query biar formatnya bener
 
 $response = curl_exec($ch);
 curl_close($ch);
 
-// DEBUG penting
+// Balikin response ke JavaScript
 echo $response;
