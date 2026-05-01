@@ -858,55 +858,44 @@ document.getElementById('btn-confirm-deposit').addEventListener('click', functio
 });
 
 // --- WITHDRAW SYSTEM ---
-const btcPrice = 65000;
-
 document.getElementById('btn-confirm-withdraw').addEventListener('click', async function() {
-    const amountUSD = parseFloat(document.getElementById('withdraw-amount').value);
+
+    const amount = parseFloat(document.getElementById('withdraw-amount').value);
     const address = document.getElementById('withdraw-address').value;
 
-    if (isNaN(amountUSD) || amountUSD <= 0) {
-        alert("❌ Invalid amount!");
+    if (!amount || amount <= 0) {
+        alert("Invalid amount");
         return;
     }
 
-    if (address.trim() === "") {
-        alert("❌ Address required!");
+    if (!address) {
+        alert("Address required");
         return;
     }
 
-    if (amountUSD > saldo) {
-        alert("❌ Insufficient funds!");
-        return;
-    }
+    try {
+        const res = await fetch("withdraw.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `amount=${amount}&address=${address}`
+        });
 
-    // convert USD -> BTC
-    const amountBTC = amountUSD / btcPrice;
+        const text = await res.text();
+        console.log("RAW RESPONSE:", text);
 
-    const res = await fetch("withdraw.php", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: `amount=${amountBTC}&address=${address}`
-    });
+        const data = JSON.parse(text);
 
-    const data = await res.json();
-    console.log(data);
+        if (data.status === "success") {
+            alert("Withdraw success!");
+        } else {
+            alert("Failed: " + (data.message || "unknown error"));
+        }
 
-    if (data.status == "success") {
-
-        // update saldo UI
-        saldo -= amountUSD;
-        document.getElementById('saldo-user').innerText = saldo.toFixed(2);
-
-        alert(`✅ Withdraw Success!\n${amountUSD} USD sent`);
-
-        // reset form
-        document.getElementById('withdraw-amount').value = "";
-        document.getElementById('withdraw-address').value = "";
-
-    } else {
-        alert("❌ Failed: " + (data.message || "error"));
+    } catch (err) {
+        alert("Request error");
+        console.log(err);
     }
 });
 
