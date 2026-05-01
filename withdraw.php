@@ -2,21 +2,20 @@
 
 header('Content-Type: application/json');
 
-$api_key = "b1690476756ef87da6c73b1c2331eccb760111963b30388ecceee22a9c611c12";
+$api_key = "API_KEY_KAMU";
 
-// ambil data dari frontend
-$amount  = $_POST['amount'];   // sudah BTC
+$amount  = floatval($_POST['amount']);
 $address = $_POST['address'];
 
-if (!$amount || !$address) {
+// minimum check
+if ($amount < 0.00000010) {
     echo json_encode([
         "status" => "error",
-        "message" => "Invalid input"
+        "message" => "Minimum 0.00000010 BTC"
     ]);
     exit;
 }
 
-// FaucetPay API
 $url = "https://faucetpay.io/api/v1/send";
 
 $data = [
@@ -26,7 +25,6 @@ $data = [
     "currency" => "BTC"
 ];
 
-// request ke FaucetPay
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
@@ -35,5 +33,5 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 $response = curl_exec($ch);
 curl_close($ch);
 
-// kirim balik ke frontend
+// DEBUG penting
 echo $response;
