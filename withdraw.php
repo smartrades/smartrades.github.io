@@ -2,7 +2,7 @@
 
 header('Content-Type: application/json');
 
-$api_key = "cae38438ca292f28637bad60891fb2926901fc083ae3b1e8722993f6e585397e";
+$api_key = "b1690476756ef87da6c73b1c2331eccb760111963b30388ecceee22a9c611c12";
 
 // ambil data dari frontend
 $amount  = $_POST['amount'];   // sudah BTC
